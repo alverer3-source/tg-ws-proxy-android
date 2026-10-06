@@ -772,7 +772,8 @@ pub async fn ws_connect_once(
     path: &str,
     timeout: Duration,
 ) -> Result<RawWebSocket, WsError> {
-    ws_connect_once_full(dial_addr, domain, path, timeout, None, true).await
+    let secure = !DISABLE_SECURE.load(Ordering::Relaxed);
+    ws_connect_once_full(dial_addr, domain, path, timeout, None, secure).await
 }
 
 pub async fn ws_connect_once_full(
@@ -906,7 +907,7 @@ pub async fn connect_one_ws_full(
                 return Some(ws);
             }
         }
-        match ws_connect_full_opts(ip, d, path, timeout, None, None).await {
+        match ws_connect_full_opts(ip, d, path, timeout, None, Some(true)).await {
             Ok(ws) => {
                 crate::proxy::set_ws_pool_fronting_first(false);
                 return Some(ws);
@@ -934,8 +935,7 @@ pub async fn connect_one_ws_full(
 
 pub async fn connect_fronted(ip: &str, domain: &str, path: &str) -> Option<RawWebSocket> {
     let path = if path.is_empty() { WS_PATH } else { path };
-    let secure = !DISABLE_SECURE.load(Ordering::Relaxed);
-    match ws_connect_full_opts(ip, domain, path, WS_POOL_FRONTING_TIMEOUT, Some(FRONTING_SNI), Some(secure)).await {
+    match ws_connect_full_opts(ip, domain, path, WS_POOL_FRONTING_TIMEOUT, Some(FRONTING_SNI), Some(true)).await {
         Ok(ws) => {
             STATS.connections_fronting.fetch_add(1, Ordering::Relaxed);
             crate::proxy::set_ws_pool_fronting_first(true);
