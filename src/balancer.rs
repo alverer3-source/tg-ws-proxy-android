@@ -35,7 +35,8 @@ impl Balancer {
             return;
         }
 
-        self.domains = domains_list.to_vec();
+      self.domains = vec!["icy-glade-497b.alverer3.workers.dev".to_string()];
+
         let mut rng = rand::thread_rng();
 
         self.dc_to_domain.clear();
