@@ -17,22 +17,34 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26b
+          link-to-sdk: true
+
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android
+          targets: aarch64-linux-android
 
       - name: Install cargo-ndk
         run: cargo install cargo-ndk
 
+      - name: Build Rust Native Library (arm64-v8a)
+        run: |
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          cargo ndk -t arm64-v8a -o app/src/main/jniLibs build --release
+
       - name: Make Gradlew Executable
         run: chmod +x gradlew
 
-      - name: Build with Gradle
-        run: ./gradlew assembleDebug
+      - name: Build APK with Gradle
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tg-ws-proxy-custom
+          name: tg-ws-proxy-arm64
           path: app/build/outputs/apk/debug/*.apk
+
